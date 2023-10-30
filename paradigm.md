@@ -3,7 +3,7 @@ We have solved all challenges (didn't manage to get the exploit working for JOP 
 
 [DODNT](#dodont)  
 [Token Locker](#token-locker)  
-[Suspicious Charity](#suspicious-charity)
+[Suspicious Charity](#suspicious-charity)  
 [DAI++](#dai)
 
 ### DODONT
