@@ -1,10 +1,10 @@
 # Paradigm CTF Writeup
 We have solved all challenges (didn't manage to get the exploit working for JOP in the last minute 😭). 
 
-
 [DODNT](#dodont)  
 [Token Locker](#token-locker)  
 [Suspicious Charity](#suspicious-charity)
+[DAI++](#dai)
 
 ### DODONT
 The DVM contract deployed at `0x1a650d6F031555837D016142b5Aec2E76ab5637F`'s init can be called by anyone. 
@@ -352,7 +352,7 @@ In the implmentation of `clone`, it says
     /// @return instance The address of the created clone
 ```
 
-Passing in a huge `recoveryAddresses` to `openAccount` will end up overwriting slots. While I first wanted to control the `configuration` slot of an Account. So theoretically we can create an Account and overwrite the `configuration` to our evil contract, and let the evil contract return evil ETH price or collateral ratio.
+Passing in a huge `recoveryAddresses` to `openAccount` will end up overwriting slots. I first wanted to control the `configuration` slot of an Account. So theoretically we can create an Account and overwrite the `configuration` to our evil contract, and let the evil contract return evil ETH price or collateral ratio.
 
 During testing, I found that just by passing in an array of length 2044 is enough. Did not spend more time investigating what got overwritten.
 
