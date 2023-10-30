@@ -1,5 +1,10 @@
 # Paradigm CTF Writeup
+We have solved all challenges (didn't manage to get the exploit working for JOP in the last minute 😭). 
 
+
+[DODNT](#dodont)  
+[Token Locker](#token-locker)  
+[Suspicious Charity](#suspicious-charity)
 
 ### DODONT
 The DVM contract deployed at `0x1a650d6F031555837D016142b5Aec2E76ab5637F`
