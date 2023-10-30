@@ -7,7 +7,7 @@ We have solved all challenges (didn't manage to get the exploit working for JOP 
 [Suspicious Charity](#suspicious-charity)
 
 ### DODONT
-The DVM contract deployed at `0x1a650d6F031555837D016142b5Aec2E76ab5637F`
+The DVM contract deployed at `0x1a650d6F031555837D016142b5Aec2E76ab5637F`'s init can be called by anyone. 
 
 ```solidity
 import "forge-std/test.sol";
