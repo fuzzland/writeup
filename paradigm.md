@@ -5,7 +5,8 @@ We have solved all challenges (didn't manage to get the exploit working for JOP 
 * [Token Locker](#token-locker)  
 * [Suspicious Charity](#suspicious-charity)  
 * [DAI++](#dai)  
-* [Dragon Tyrant](#dragon-tyrant) 
+* [Dragon Tyrant](#dragon-tyrant)
+* [Oven](#oven) 
 * [Black Sheep](#black-sheep)
 * [Skill Based Game](#skill-based-game)
 * [Blockchain Enterprise](#blockchain-enterprise) 
@@ -376,7 +377,6 @@ During testing, I found that just by passing in an array of length 2044 is enoug
         vm.stopBroadcast();
 ```
 
-
 ### Dragon Tyrant
 
 The goal is to burn the NFT token owned by the NFT token contract itself by winning the fight. 
@@ -545,6 +545,67 @@ contract ChallengeTest is Test {
     }
 }
 
+```
+
+### Oven
+
+The random number v is chosen over $2$ ~ $2^{512}$, which is relatively small compared to $(p-1) \in 2^{1024}$, giving us the chance to exploit the hidden number problem. We use LLL to recover the flag.
+
+```sage
+# Use SageMath 10.1
+from pwn import *
+from Crypto.Util.number import *
+import re
+
+def parse_msg(msg):
+    lines = msg.split('\n')
+    regex = re.compile(r'(\w*) = (\d*)')
+    params = {m.group(1): int(m.group(2)) for m in (regex.match(line) for line in lines) if m}
+    return params['t'], params['r'], params['p'], params['g'], params['y']
+
+def custom_hash(n):
+    def xor(a, b):
+        return bytes([i ^^ j for i, j in zip(a, b)])
+    state = b"\x00" * 16
+    for i in range(len(n) // 16):
+        state = xor(state, n[i : i + 16])
+    for _ in range(5):
+        state = hashlib.md5(state).digest()
+        state = hashlib.sha1(state).digest()
+        state = hashlib.sha256(state).digest()
+        state = hashlib.sha512(state).digest() + hashlib.sha256(state).digest()
+    return bytes_to_long(state)
+
+def get_msg(conn):
+    return conn.recvuntil(b'Choice:').decode('ascii')
+
+conn = remote('oven.challenges.paradigm.xyz', int(1337))
+_ = get_msg(conn)
+
+qs = []
+cs = []
+rs = []
+N = 50
+for i in range(N):
+    conn.sendline(b'1')
+    t, r, p, g, y = parse_msg(get_msg(conn))
+    c = custom_hash(long_to_bytes(g) + long_to_bytes(y) + long_to_bytes(t))
+    qs.append(p-1)
+    cs.append(c)
+    rs.append(r)
+conn.close()
+
+M = matrix(ZZ, N+2, N+2)
+for i in range(N):
+    M[i,i]  = qs[i]
+    M[-2,i] = cs[i]
+    M[-1,i] = rs[i]
+M[-2,-2] = 1
+M[-1,-1] = 2^248
+M_lll = M.LLL()
+x = M_lll[0,-2]
+
+print(long_to_bytes(x))
 ```
 
 ### Black Sheep
